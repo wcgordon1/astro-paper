@@ -6,16 +6,15 @@ import Tag from "@components/Tag.astro";
 import Datetime from "@components/Datetime";
 import type { CollectionEntry } from "astro:content";
 import { slugifyStr } from "@utils/slugify";
-import type { BlogFrontmatter } from "@content/_schemas";
 
 export interface Props {
   post: CollectionEntry<"blog">;
-  frontmatter: BlogFrontmatter;
 }
 
-const { post, frontmatter } = Astro.props;
+const { post } = Astro.props;
 
-const { title, author, description, ogImage, pubDatetime, tags } = post.data;
+const { title, author, description, ogImage, pubDatetime, tags, readingTime } =
+  post.data;
 
 const { Content } = await post.render();
 
@@ -39,8 +38,12 @@ const ogUrl = new URL(ogImage ? ogImage : `${title}.png`, Astro.url.origin)
   </div>
   <main id="main-content">
     <h1 class="post-title">{title}</h1>
-    <p>{frontmatter.readingTime}</p>
-    <Datetime datetime={pubDatetime} size="lg" className="my-2" />
+    <Datetime
+      datetime={pubDatetime}
+      size="lg"
+      className="my-2"
+      readingTime={readingTime}
+    />
     <article id="article" role="article" class="prose mx-auto mt-8 max-w-3xl">
       <Content />
     </article>

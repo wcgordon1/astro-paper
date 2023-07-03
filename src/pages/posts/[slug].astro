@@ -4,6 +4,7 @@ import Posts from "@layouts/Posts.astro";
 import PostDetails from "@layouts/PostDetails.astro";
 import getSortedPosts from "@utils/getSortedPosts";
 import getPageNumbers from "@utils/getPageNumbers";
+import getPostsWithRT from "@utils/getPostsWithRT";
 import slugify from "@utils/slugify";
 import { SITE } from "@config";
 import type { BlogFrontmatter } from "@content/_schemas";
@@ -14,24 +15,13 @@ export interface Props {
 }
 
 export async function getStaticPaths() {
-  const mapFrontmatter = new Map();
-
-  // Get all posts using glob. This is to get the updated frontmatter
-  const globPosts = await Astro.glob<BlogFrontmatter>(
-    "../../content/blog/*.md"
-  );
-
-  // Then, set those frontmatter value in a JS Map with key value pair
-  // (post-slug, frontmatter)
-  globPosts.map(({ frontmatter }) => {
-    mapFrontmatter.set(slugify(frontmatter), frontmatter);
-  });
-
   const posts = await getCollection("blog", ({ data }) => !data.draft);
 
-  const postResult = posts.map(post => ({
+  const postsWithRT = await getPostsWithRT(posts);
+
+  const postResult = postsWithRT.map(post => ({
     params: { slug: slugify(post.data) },
-    props: { post, frontmatter: mapFrontmatter.get(slugify(post.data)) },
+    props: { post },
   }));
 
   const pagePaths = getPageNumbers(posts.length).map(pageNum => ({
@@ -42,11 +32,11 @@ export async function getStaticPaths() {
 }
 
 const { slug } = Astro.params;
-const { post, frontmatter } = Astro.props;
+const { post } = Astro.props;
 
 const posts = await getCollection("blog");
 
-const sortedPosts = getSortedPosts(posts);
+const sortedPosts = await getSortedPosts(posts);
 
 const totalPages = getPageNumbers(sortedPosts.length);
 
@@ -62,7 +52,7 @@ const paginatedPosts = sortedPosts.slice(startPost, lastPost);
 
 {
   post ? (
-    <PostDetails post={post} frontmatter={frontmatter} />
+    <PostDetails post={post} />
   ) : (
     <Posts
       posts={paginatedPosts}
